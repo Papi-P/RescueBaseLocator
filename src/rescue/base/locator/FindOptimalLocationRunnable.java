@@ -63,10 +63,10 @@ public class FindOptimalLocationRunnable implements Callable<DoublePoint> {
             double y = start[1];
 
             //define the algorithm settings.
-            double accuracy = 1;
+            double accuracy = 0.99;
 
             //define the intial step value. This is used while checking the 4 cardinal directions
-            double step = 250;
+            double step = 1;
 
             //declare the minimum distance to the distance of the center of gravity.
             double min = totalDistance(new double[]{x, y}, points);

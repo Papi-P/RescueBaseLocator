@@ -34,6 +34,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
 import javax.swing.text.PlainDocument;
 import static rescue.base.locator.Algorithm.graphicalAnalysis;
+import static rescue.base.locator.GUI.overlayEnabled;
 import static rescue.base.locator.RescueBaseLocator.locations;
 
 /**
@@ -41,7 +42,7 @@ import static rescue.base.locator.RescueBaseLocator.locations;
  * @author Daniel Allen
  */
 public class GUI extends JFrame {
-
+    protected static boolean overlayEnabled = false;
     private GridBagLayout gbl = new GridBagLayout();
     private GridBagConstraints gbc = new GridBagConstraints();
 
@@ -129,7 +130,7 @@ class ImagePanel extends JPanel implements MouseListener {
         }
         if (doubleBuffer != null) {
             if (RescueBaseLocator.locations != null) {
-                if(overlay != null)
+                if(overlay != null && overlayEnabled)
                     g2d.drawImage(overlay, 0, 0, null);
             }
         }
@@ -202,7 +203,8 @@ class ButtonPanel extends JPanel {
                     double distanceFromPayne = Algorithm.totalDistance(new double[]{331, 352}, locations);
                     double distanceFromMe = Algorithm.totalDistance(new double[]{362, 388}, locations);
                     System.out.println("Distance from Mr. Payne's point: " + distanceFromPayne + "\nDistance from My Point: " + distanceFromMe);
-                    RescueBaseLocator.gui.imgP.updateOverlay();
+                    if(overlayEnabled)
+                        RescueBaseLocator.gui.imgP.updateOverlay();
                 }
             } catch (Exception e) {
                 System.exit(1);
