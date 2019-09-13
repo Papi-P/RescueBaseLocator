@@ -18,7 +18,8 @@ import static rescue.base.locator.RescueBaseLocator.locations;
  */
 public class Algorithm {
 
-    private static boolean useProperAlgorithm = true;
+    //whether to use Math.hypot instead of just adding the squares. I believe the Math.hypot formula is correct, but it gives me a different answer from Mr. Payne
+    private static boolean useProperAlgorithm = false;
 
     public static void Main(String[] args) {
 

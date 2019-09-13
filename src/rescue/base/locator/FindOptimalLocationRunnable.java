@@ -39,15 +39,29 @@ public class FindOptimalLocationRunnable implements Callable<DoublePoint> {
     //keep track of if the task was cancelled
     public static volatile boolean cancelled = false;
 
+    //handle the delay between calculations. The timer has been modified to not implement the time that the thread was sleeping.
+    private long waitTime = 0;
+
+    public void setWaitTime(long waitTime) {
+        if (waitTime < 0) {
+            throw new IllegalArgumentException("The wait time cannot be negative!");
+        }
+        this.waitTime = waitTime;
+    }
+
+    public long getWaitTime() {
+        return this.waitTime;
+    }
+
     @Override
     public DoublePoint call() throws Exception {
         synchronized (this) {
             /*
-         THEORY:
-         1. Start at the coordinate the user entered to start.
-         2. Check the 4 cardinal directions from a point (x,y) for the least distance between all points.
-         a) If the distance between all points is at a minimum from the check position, set the minimum distance to the distance calculated, and set the new (x,y) point to the tested point.
-         3. Iterate this process multiple times until the move value is less than the accuracy value. This will slowly move towards the median point, getting a more accurate result with each iteration.
+             THEORY:
+             1. Start at the coordinate the user entered to start.
+             2. Check the 4 cardinal directions from a point (x,y) for the least distance between all points.
+             a) If the distance between all points is at a minimum from the check position, set the minimum distance to the distance calculated, and set the new (x,y) point to the tested point.
+             3. Iterate this process multiple times until the move value is less than the accuracy value. This will slowly move towards the median point, getting a more accurate result with each iteration.
              */
             if (points == null) {
                 return new DoublePoint(0, 0);
@@ -63,10 +77,10 @@ public class FindOptimalLocationRunnable implements Callable<DoublePoint> {
             double y = start[1];
 
             //define the algorithm settings.
-            double accuracy = 0.99;
+            double accuracy = 1;
 
             //define the intial step value. This is used while checking the 4 cardinal directions
-            double step = 1;
+            double step = 250;
 
             //declare the minimum distance to the distance of the center of gravity.
             double min = totalDistance(new double[]{x, y}, points);
@@ -115,7 +129,7 @@ public class FindOptimalLocationRunnable implements Callable<DoublePoint> {
                             gui.imgP.paintImmediately(0, 0, gui.imgP.getWidth(), gui.imgP.getHeight());
                             try {
                                 //make the algorithm wait a little bit before calculating the next point. This helps with debugging and can be deleted or disabled at any time.
-                                Thread.sleep(0);
+                                Thread.sleep(waitTime);
                             } catch (InterruptedException ex) {
 
                             }
@@ -132,10 +146,14 @@ public class FindOptimalLocationRunnable implements Callable<DoublePoint> {
                 }
             }
             long endMillis = System.currentTimeMillis();
-
-            System.out.println("Found in " + (endMillis - startMillis) + " milliseconds with " + numSteps + " steps.");
+            
+            //output the calculation time and steps. This removes the time the thread was sleeping from the timer.
+            System.out.println("Found in " + ((endMillis - startMillis) - (numSteps - 1) * waitTime) + " milliseconds with " + numSteps + " steps.");
+            
+            //remove the currentPoint from the GUI since it no longer needed and would just slow down the program.
             gui.imgP.currentPointCalculation = null;
             DoublePoint median = new DoublePoint(x, y);
+            
             System.out.println(median);
             return median;
         }
