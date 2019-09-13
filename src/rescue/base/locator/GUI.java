@@ -46,7 +46,7 @@ public class GUI extends JFrame {
     private GridBagConstraints gbc = new GridBagConstraints();
 
     public ImagePanel imgP = new ImagePanel();
-
+    public ButtonPanel buttons = new ButtonPanel();
     public GUI() {
         this.setLayout(gbl);
         gbl.columnWeights = new double[]{0.622, 0.288};
@@ -61,7 +61,7 @@ public class GUI extends JFrame {
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
-        ButtonPanel buttons = new ButtonPanel();
+
         this.add(buttons, gbc);
         this.setSize(900, 658);
         this.setResizable(false);
@@ -102,6 +102,11 @@ class ImagePanel extends JPanel implements MouseListener {
     public DoublePoint bestLocation;
     public DoublePoint currentPointCalculation;
 
+    private BufferedImage overlay;
+    public void updateOverlay(){
+        overlay = graphicalAnalysis(new BufferedImage(doubleBuffer.getWidth(), doubleBuffer.getHeight(), BufferedImage.TYPE_INT_ARGB));
+        repaint();
+    }
     @Override
     public void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D) doubleBuffer.getGraphics();
@@ -124,8 +129,8 @@ class ImagePanel extends JPanel implements MouseListener {
         }
         if (doubleBuffer != null) {
             if (RescueBaseLocator.locations != null) {
-                BufferedImage overlay = graphicalAnalysis(new BufferedImage(doubleBuffer.getWidth(), doubleBuffer.getHeight(), BufferedImage.TYPE_INT_ARGB));
-                g2d.drawImage(overlay, 0, 0, null);
+                if(overlay != null)
+                    g2d.drawImage(overlay, 0, 0, null);
             }
         }
         if (currentPointCalculation != null) {
@@ -150,8 +155,10 @@ class ImagePanel extends JPanel implements MouseListener {
                 return "(" + this.x + ", " + this.y + ")";
             }
         };
-        if (new Rectangle(this.getSize()).contains(clickedPoint)) {
+        if (this.getBounds().contains(clickedPoint)) {
             clickPoint = clickedPoint;
+            RescueBaseLocator.gui.buttons.startingXField.setText(""+clickedPoint.x);
+            RescueBaseLocator.gui.buttons.startingYField.setText(""+clickedPoint.y);
             repaint();
             System.out.println(clickedPoint);
         }
@@ -195,7 +202,7 @@ class ButtonPanel extends JPanel {
                     double distanceFromPayne = Algorithm.totalDistance(new double[]{331, 352}, locations);
                     double distanceFromMe = Algorithm.totalDistance(new double[]{362, 388}, locations);
                     System.out.println("Distance from Mr. Payne's point: " + distanceFromPayne + "\nDistance from My Point: " + distanceFromMe);
-
+                    RescueBaseLocator.gui.imgP.updateOverlay();
                 }
             } catch (Exception e) {
                 System.exit(1);
@@ -203,7 +210,7 @@ class ButtonPanel extends JPanel {
 
         }
     };
-    ExecutorService finderExcutor = Executors.newCachedThreadPool();
+    ExecutorService finderExecutor = Executors.newCachedThreadPool();
     private ActionButton optimalFinderButton = new ActionButton("Find optimal location") {
         Future<DoublePoint> f;
 
@@ -218,12 +225,21 @@ class ButtonPanel extends JPanel {
                 new InformationWindow("Error!", "Load locations first!", JOptionPane.ERROR_MESSAGE).show();
                 return;
             }
-            FindOptimalLocationRunnable finderCallable = new FindOptimalLocationRunnable(RescueBaseLocator.locations);
+
+            if(Algorithm.countMatches(startingXField.getText(), '.') > 1 || Algorithm.countMatches(startingYField.getText(), '.') > 1){
+                new InformationWindow("Error!", "There cannot be more than 1 decimal in a number!", JOptionPane.ERROR_MESSAGE).show();
+                return;
+            }
+
+            FindOptimalLocationRunnable finderCallable = new FindOptimalLocationRunnable(RescueBaseLocator.locations, new double[]{
+                    (!startingXField.getText().isEmpty() || startingXField.getText().equals(".") ? Double.parseDouble(startingXField.getText()) : 0d),
+                    (!startingYField.getText().isEmpty() || startingYField.getText().equals(".") ? Double.parseDouble(startingYField.getText()) : 0d)
+            });
             if (f == null) {
-                f = finderExcutor.submit(finderCallable);
+                f = finderExecutor.submit(finderCallable);
             }
             if (f.isDone()) {
-                f = finderExcutor.submit(finderCallable);
+                f = finderExecutor.submit(finderCallable);
             }
             try {
                 RescueBaseLocator.gui.imgP.bestLocation = f.get();
@@ -236,8 +252,8 @@ class ButtonPanel extends JPanel {
 
         }
     };
-    private InputField startingXField = new InputField(150, 25, "Starting X coordinate");
-    private InputField startingYField = new InputField(150, 25, "Starting Y coordinate");
+    public InputField startingXField = new InputField(150, 25, "Starting X coordinate");
+    public InputField startingYField = new InputField(150, 25, "Starting Y coordinate");
 
     @Override
     public void paintComponent(Graphics g) {
@@ -253,19 +269,17 @@ class ButtonPanel extends JPanel {
         gbc.gridy = 0;
         this.add(loadResourceButton, gbc);
 
-
         startingXField.setNumbersOnly(true);
-        startingXField.setAllowDecimals(true);
+        startingXField.setAllowDecimals(false);
         startingXField.setPlaceholder("Starting X Coordinate");
         startingXField.setPadding(0, 5, 0, 0);
-        startingXField.setCurve(15);
+        startingXField.setCurve(18);
 
         startingYField.setNumbersOnly(true);
-        startingYField.setAllowDecimals(true);
+        startingYField.setAllowDecimals(false);
         startingYField.setPlaceholder("Starting Y Coordinate");
         startingYField.setPadding(0, 5, 0, 0);
-        startingXField.setCurve(15);
-
+        startingYField.setCurve(18);
 
         gbc.gridy++;
         this.add(startingXField, gbc);
@@ -371,12 +385,17 @@ class InputField extends JTextField {
     private String placeholder = "";
 
     private BufferedImage buffer = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+
     @Override
     protected void paintComponent(Graphics g) {
-        if(buffer.getWidth() != this.getWidth() || buffer.getHeight() != this.getHeight()){
+        if (buffer.getWidth() != this.getWidth() || buffer.getHeight() != this.getHeight()) {
             buffer = new BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TYPE_INT_ARGB);
         }
         Graphics2D g2d = (Graphics2D) buffer.getGraphics();
+
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
         g2d.setColor(getBackground());
         g2d.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, curve, curve);
         if (getText().isEmpty() && !placeholder.isEmpty()) {
@@ -405,6 +424,7 @@ class InputField extends JTextField {
         }
         return fieldShape.contains(x, y);
     }
+
     class CustomDocFilter extends DocumentFilter {
 
         private String regex = "";

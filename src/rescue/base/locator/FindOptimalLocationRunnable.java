@@ -16,13 +16,29 @@ import static rescue.base.locator.RescueBaseLocator.gui;
 public class FindOptimalLocationRunnable implements Callable<DoublePoint> {
 
     private double[][] points;
+    private double[] start;
 
     public FindOptimalLocationRunnable(double[][] points) {
+        this(points, new double[]{0, 0});
+    }
+
+    ;
+    public FindOptimalLocationRunnable(double[][] points, double[] start) {
+        if (start == null) {
+            throw new NullPointerException("The start location cannot be null!");
+        }
+        if (start.length < 2) {
+            throw new IllegalArgumentException("The start location must have 2 points!");
+        }
         cancelled = false;
         this.points = points;
-    };
+        this.start = start;
+    }
+    ;
+
     //keep track of if the task was cancelled
     public static volatile boolean cancelled = false;
+
     @Override
     public DoublePoint call() throws Exception {
         synchronized (this) {
@@ -40,12 +56,14 @@ public class FindOptimalLocationRunnable implements Callable<DoublePoint> {
                 return new DoublePoint(0, 0);
             }
 
+            long startMillis = System.currentTimeMillis();
+
             //start at 0, 0 for demonstration purposes. This will be replaced with user input later.
-            double x = 0;
-            double y = 0;
+            double x = start[0];
+            double y = start[1];
 
             //define the algorithm settings.
-            double accuracy = 1.5;
+            double accuracy = 1;
 
             //define the intial step value. This is used while checking the 4 cardinal directions
             double step = 250;
@@ -55,7 +73,7 @@ public class FindOptimalLocationRunnable implements Callable<DoublePoint> {
             double[] directionModifier = new double[]{1, 0, -1, 0, 0, 1, 0, -1};
 
             //keep track of how many steps are taken
-            int numSteps = 0;
+            int numSteps = 1;
 
             //loop while the algorithm is not as accurate as specified
             while (step > accuracy && !cancelled) {
@@ -94,7 +112,6 @@ public class FindOptimalLocationRunnable implements Callable<DoublePoint> {
                             //force the GUI to repaint itself immediately. Just using repaint() counts this as a redundent call and will not display it on the GUI. For speed optimization, only repaint the old and new points.
                             //gui.imgP.paintImmediately((int)prevX-10, (int)prevY-10, (int)prevX+10, (int)prevY+10);
                             //gui.imgP.paintImmediately((int)x-10, (int)y-10, (int)x+10, (int)y+10);
-                            
                             gui.imgP.paintImmediately(0, 0, gui.imgP.getWidth(), gui.imgP.getHeight());
                             try {
                                 //make the algorithm wait a little bit before calculating the next point. This helps with debugging and can be deleted or disabled at any time.
@@ -105,7 +122,6 @@ public class FindOptimalLocationRunnable implements Callable<DoublePoint> {
                             numSteps++;
                             //System.out.println("Distance from current minimum (" + df.format(x) + ", " + df.format(y) + "): " + df.format(totalDistance(new double[]{x, y}, points)));
                         }
-
                     }
                 }
                 //if the point didn't move this iteration (if the point was better than the 4 directions around it)
@@ -115,7 +131,9 @@ public class FindOptimalLocationRunnable implements Callable<DoublePoint> {
                     //System.out.println("Spot did not move!\nStep size is now: " + step + "\n");
                 }
             }
-            System.out.println("Found in " + numSteps + " steps.");
+            long endMillis = System.currentTimeMillis();
+
+            System.out.println("Found in " + (endMillis - startMillis) + " milliseconds with " + numSteps + " steps.");
             gui.imgP.currentPointCalculation = null;
             DoublePoint median = new DoublePoint(x, y);
             System.out.println(median);
