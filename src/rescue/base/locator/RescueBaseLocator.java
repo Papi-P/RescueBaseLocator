@@ -53,7 +53,7 @@ public class RescueBaseLocator {
         String line;
         ArrayList<String> positions = new ArrayList<>();
       
-        int maxLines = 70;
+        int maxLines = 76;
         int curLines = 0;
         //add all lines from the file to an ArrayList
         while ((line = read.readLine()) != null && ((curLines < maxLines) || maxLines == -1)) {

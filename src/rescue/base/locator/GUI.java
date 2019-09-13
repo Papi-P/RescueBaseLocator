@@ -1,21 +1,17 @@
 package rescue.base.locator;
 
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
-import java.awt.Shape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -27,12 +23,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DocumentFilter;
-import javax.swing.text.PlainDocument;
 import static rescue.base.locator.Algorithm.graphicalAnalysis;
 import static rescue.base.locator.GUI.overlayEnabled;
 import static rescue.base.locator.RescueBaseLocator.locations;
@@ -195,14 +186,15 @@ class ButtonPanel extends JPanel {
             jfc.setCurrentDirectory(new File(System.getProperty("user.dir")));
             try {
                 if (jfc.showOpenDialog(jfc) == JFileChooser.APPROVE_OPTION) {
+                    
                     File selectedFile = jfc.getSelectedFile();
                     String filePath = selectedFile.getParentFile().getAbsolutePath() + "\\";
                     String fileName = selectedFile.getName();
+                    
                     RescueBaseLocator.locations = RescueBaseLocator.readLocations(filePath, fileName);
+                    
                     RescueBaseLocator.gui.imgP.repaint();
-                    double distanceFromPayne = Algorithm.totalDistance(new double[]{331, 352}, locations);
-                    double distanceFromMe = Algorithm.totalDistance(new double[]{362, 388}, locations);
-                    System.out.println("Distance from Mr. Payne's point: " + distanceFromPayne + "\nDistance from My Point: " + distanceFromMe);
+                    
                     if(overlayEnabled)
                         RescueBaseLocator.gui.imgP.updateOverlay();
                 }
