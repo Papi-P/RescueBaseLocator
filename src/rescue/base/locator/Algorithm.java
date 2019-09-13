@@ -5,15 +5,12 @@
  */
 package rescue.base.locator;
 
-import com.sun.istack.internal.NotNull;
 import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.text.DecimalFormat;
 import static rescue.base.locator.RescueBaseLocator.gui;
+import static rescue.base.locator.RescueBaseLocator.locations;
 
 /**
  *
@@ -27,21 +24,14 @@ public class Algorithm {
     public static void Main(String[] args) {
 
     }
+    private static DecimalFormat df = new DecimalFormat("0000.00000");
 
-    /**
-     * Just keeping this around for marks (nudge nudge wink wink ;) )
-     *
-     * @param points
-     * @return
-     * @deprecated
-     */
-    @Deprecated
     public static DoublePoint getOptimalPosition(double[][] points) {
         /*
          THEORY:
          1. Start at the coordinate the user entered to start.
          2. Check the 4 cardinal directions from a point (x,y) for the least distance between all points.
-            a) If the distance between all points is at a minimum from the check position, set the minimum distance to the distance calculated, and set the new (x,y) point to the tested point.
+         a) If the distance between all points is at a minimum from the check position, set the minimum distance to the distance calculated, and set the new (x,y) point to the tested point.
          3. Iterate this process multiple times until the move value is less than the accuracy value. This will slowly move towards the median point, getting a more accurate result with each iteration.
          */
         if (points == null) {
@@ -56,10 +46,10 @@ public class Algorithm {
         double y = 0;
 
         //define the algorithm settings.
-        double accuracy = 0.1;
+        double accuracy = 1;
 
         //define the intial step value. This is used while checking the 4 cardinal directions
-        double step = 250;
+        double step = 25;
 
         //declare the minimum distance to the distance of the center of gravity.
         double min = totalDistance(new double[]{x, y}, points);
@@ -104,13 +94,16 @@ public class Algorithm {
                         } catch (InterruptedException ex) {
 
                         }
+                        System.out.println("Distance from current minimum (" + df.format(x) + ", " + df.format(y) + "): " + df.format(totalDistance(new double[]{x, y}, points)));
                     }
+
                 }
             }
             //if the point didn't move this iteration (if the point was better than the 4 directions around it)
             if (!movedThisIteration) {
                 //decrease the step size to increase accuracy.
                 step /= 2;
+                System.out.println("Spot did not move!\nStep size is now: " + step + "\n");
             }
         }
         gui.imgP.currentPointCalculation = null;
@@ -142,20 +135,26 @@ public class Algorithm {
     public static DoublePoint walkingAlgorithm(double[] startPoint, double[][] points) {
         double x = startPoint[0];
         double y = startPoint[1];
+        boolean optimal = false;
         //while x and y are not optimal
-        //loop through the cardinal directions of the point
-        //calculate the total distance of the current point + the step size in the current direction
-        //set the new point to the position of the lowest distances
+        while (!optimal) {
+            //loop through the cardinal directions of the point
+            for (int i = 0; i < 4; i++) {
+                //calculate the total distance of the current point + the step size in the current direction
+                double currentDistance = Algorithm.totalDistance(new double[]{x, y}, points);
+                //set the new point to the position of the lowest distances
+            }
+        }
         return null;
     }
 
     public static BufferedImage graphicalAnalysis(BufferedImage canvas) {
         int falloff = 1;
-        double maxDist = Math.sqrt(Math.pow(canvas.getWidth(), 2) + Math.pow(canvas.getHeight(), 2));
+        double maxDist = Math.pow(canvas.getWidth(),2)+Math.pow(canvas.getHeight(),2);
         for (int x = 0; x < canvas.getWidth(); x++) {
             for (int y = 0; y < canvas.getHeight(); y++) {
                 double distanceAtPoint = Algorithm.totalDistance(new double[]{x, y}, RescueBaseLocator.locations);
-                float col = (float) (distanceAtPoint / maxDist);
+                float col = (float) Math.sqrt((distanceAtPoint / locations.length) / maxDist);
                 Color c = new Color(col, col, col, 0.96f);
                 canvas.setRGB(x, y, c.getRGB());
             }
@@ -182,9 +181,9 @@ public class Algorithm {
         for (int i = 0; i < points.length; i++) {
             double pointX = points[i][0] - x;
             double pointY = points[i][1] - y;
-            double distance = Math.sqrt(Math.pow(pointX, 2) + Math.pow(pointY, 2));
+            double distance = Math.pow(pointX, 2) + Math.pow(pointY, 2);
             sum += distance;
         }
-        return sum / points.length;
+        return sum;
     }
 }

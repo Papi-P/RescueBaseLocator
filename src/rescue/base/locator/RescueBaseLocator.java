@@ -22,14 +22,14 @@ import javax.swing.JOptionPane;
  */
 public class RescueBaseLocator {
 
-    protected static GUI gui = new GUI();
+    protected static GUI gui;
     /**
      * @param args the command line arguments
      */
     static double locations[][];
 
     public static void main(String[] args) {
-        
+        gui = new GUI();
     }
 
     public static double[][] readLocations(String filePath, String fileName) throws FileNotFoundException, IOException {
@@ -53,7 +53,7 @@ public class RescueBaseLocator {
         String line;
         ArrayList<String> positions = new ArrayList<>();
 
-        int maxLines = 70;
+        int maxLines = 76;
         int curLines = 0;
         //add all lines from the file to an ArrayList
         while ((line = read.readLine()) != null && ((curLines < maxLines) || maxLines == -1)) {
