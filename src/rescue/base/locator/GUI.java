@@ -1,5 +1,6 @@
 package rescue.base.locator;
 
+import rescue.guiComponents.InputField;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -8,8 +9,6 @@ import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.RenderingHints;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
@@ -26,7 +25,7 @@ import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import static rescue.base.locator.Algorithm.graphicalAnalysis;
 import static rescue.base.locator.GUI.overlayEnabled;
-import static rescue.base.locator.RescueBaseLocator.locations;
+import rescue.guiComponents.InputButton;
 
 /**
  *
@@ -176,9 +175,9 @@ class ImagePanel extends JPanel implements MouseListener {
 
 class ButtonPanel extends JPanel {
 
-    private ActionButton loadResourceButton = new ActionButton("Load and Display Rescues") {
+    private InputButton loadResourceButton = new InputButton("Load and Display Rescues") {
         @Override
-        void onClick() {
+        public void onClick() {
             JFileChooser jfc = new JFileChooser();
             jfc.setToolTipText("Select rescue locations from file");
             FileNameExtensionFilter fnef = new FileNameExtensionFilter("TEXT FILES", "txt", "text");
@@ -186,15 +185,15 @@ class ButtonPanel extends JPanel {
             jfc.setCurrentDirectory(new File(System.getProperty("user.dir")));
             try {
                 if (jfc.showOpenDialog(jfc) == JFileChooser.APPROVE_OPTION) {
-                    
+
                     File selectedFile = jfc.getSelectedFile();
                     String filePath = selectedFile.getParentFile().getAbsolutePath() + "\\";
                     String fileName = selectedFile.getName();
-                    
+
                     RescueBaseLocator.locations = RescueBaseLocator.readLocations(filePath, fileName);
-                    
+
                     RescueBaseLocator.gui.imgP.repaint();
-                    
+
                     if(overlayEnabled)
                         RescueBaseLocator.gui.imgP.updateOverlay();
                 }
@@ -205,11 +204,11 @@ class ButtonPanel extends JPanel {
         }
     };
     ExecutorService finderExecutor = Executors.newCachedThreadPool();
-    private ActionButton optimalFinderButton = new ActionButton("Find optimal location") {
+    private InputButton optimalFinderButton = new InputButton("Find optimal location") {
         Future<DoublePoint> f;
 
         @Override
-        void onClick() {
+        public void onClick() {
             if (RescueBaseLocator.locations == null) {
                 new InformationWindow("Error!", "Load locations first!", JOptionPane.ERROR_MESSAGE).show();
                 return;
@@ -259,42 +258,33 @@ class ButtonPanel extends JPanel {
 
     public ButtonPanel() {
         this.setLayout(gbl);
+
+        startingXField.setNumbersOnly(true)
+                .setAllowDecimals(true)
+                .setPlaceholder("Starting X Coordinate")
+                .setPadding(0, 5, 0, 0)
+                .setCurve(18)
+                .setDisabledTextColor(new Color(120,120,120));
+
+
+        startingYField.setNumbersOnly(true)
+                .setAllowDecimals(true)
+                .setPlaceholder("Starting Y Coordinate")
+                .setPadding(0, 5, 0, 0)
+                .setCurve(18)
+                .setDisabledTextColor(new Color(120,120,120));
+
+
+        //                             load   -    x    y    -   find
+        gbl.rowWeights = new double[] { 0.3, 0.1, 0.3, 0.3, 0.1, 0.3};
         gbc.gridx = 0;
         gbc.gridy = 0;
         this.add(loadResourceButton, gbc);
-
-        startingXField.setNumbersOnly(true);
-        startingXField.setAllowDecimals(false);
-        startingXField.setPlaceholder("Starting X Coordinate");
-        startingXField.setPadding(0, 5, 0, 0);
-        startingXField.setCurve(18);
-
-        startingYField.setNumbersOnly(true);
-        startingYField.setAllowDecimals(false);
-        startingYField.setPlaceholder("Starting Y Coordinate");
-        startingYField.setPadding(0, 5, 0, 0);
-        startingYField.setCurve(18);
-
-        gbc.gridy++;
+        gbc.gridy+=2;
         this.add(startingXField, gbc);
         gbc.gridy++;
         this.add(startingYField, gbc);
-        gbc.gridy++;
+        gbc.gridy+=2;
         this.add(optimalFinderButton, gbc);
     }
-}
-
-abstract class ActionButton extends JButton {
-
-    public ActionButton(String text) {
-        super(text);
-        this.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                onClick();
-            }
-        });
-    }
-
-    abstract void onClick();
 }

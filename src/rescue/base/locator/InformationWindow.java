@@ -13,7 +13,7 @@ import javax.swing.JOptionPane;
  *
  * @author Daniel Allen
  */
-class InformationWindow{
+public class InformationWindow{
     private String msg;
     private int msgType;
     private String title;
@@ -21,13 +21,13 @@ class InformationWindow{
         this.msg = message;
         this.msgType = messageType;
         this.title = title;
-        
+
     }
-    public void show(){
+    public JOptionPane show(){
         JOptionPane jop = new JOptionPane();
         jop.setMessage(msg);
         jop.setMessageType(msgType);
         jop.createDialog(title).setVisible(true);
-        
+        return jop;
     }
 }

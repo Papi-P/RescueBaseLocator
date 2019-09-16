@@ -1,33 +1,32 @@
 /*
  * © 2019 Daniel Allen
  */
-package rescue.base.locator;
+package rescue.guiComponents;
 
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.event.ActionEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
-import javax.swing.JTextField;
+import javax.swing.JButton;
 import javax.swing.border.Border;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DocumentFilter;
-import javax.swing.text.PlainDocument;
 
 /**
  * JTextField with convenient customization options.<br><br>
  *
  * @author Daniel Allen
  */
-public class InputField extends JTextField {
+public abstract class InputButton extends JButton {
+
     //store the input restriction booleans.
     private boolean numOnly = false;
     private boolean allowDecimals = true;
-    
+
     //<editor-fold defaultstate="collapsed" desc="Enums">
     enum Alignments {
 
@@ -45,7 +44,7 @@ public class InputField extends JTextField {
         }
     }
     //</editor-fold>
-    
+
     //<editor-fold defaultstate="collapsed" desc="Constructors">
     /**
      * Creates a new InputField with the specified width, height, and
@@ -61,12 +60,12 @@ public class InputField extends JTextField {
      *
      * @see setToolTipText
      */
-    public InputField(int width, int height, String tooltip) {
+    public InputButton(int width, int height, String text) {
         this.setPreferredSize(new Dimension(width, height));
-        this.setToolTipText(tooltip);
+        this.setText(text);
         init();
     }
-    
+
     /**
      * Creates a new InputField with the specified width and height.
      *
@@ -74,11 +73,11 @@ public class InputField extends JTextField {
      * @param height the height of the input field
      *
      */
-    public InputField(int width, int height) {
+    public InputButton(int width, int height) {
         this.setPreferredSize(new Dimension(width, height));
         init();
     }
-    
+
     /**
      * Creates a new InputField with the specified tooltip.<br>
      * &nbsp;&nbsp;&nbsp;&nbsp;Note: the tooltip will likely be switched for
@@ -90,26 +89,31 @@ public class InputField extends JTextField {
      *
      * @see setToolTipText
      */
-    public InputField(String tooltip) {
-        this.setToolTipText(tooltip);
+    public InputButton(String text) {
+        this.setText(text);
         init();
     }
-    
+
     /**
      * Creates a new InputField with no predetermined values.
      *
      */
-    public InputField() {
+    public InputButton() {
         init();
     }
-    
+
     //initialize the component. This doesn't need to be called manually, or ever after the field is initialized.
     private void init() {
         setOpaque(false);
-        ((PlainDocument) this.getDocument()).setDocumentFilter(new CustomDocFilter());
+        this.addActionListener(new AbstractAction(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                onClick();
+            }
+        });
     }
 //</editor-fold>
-    
+
     //<editor-fold defaultstate="collapsed" desc="Padding">
     //padding methods and storage
     private Border padding = BorderFactory.createEmptyBorder();
@@ -123,9 +127,10 @@ public class InputField extends JTextField {
      * @param bottom The padding at the bottom of the field.
      * @param right The padding at the right of the field.
      */
-    public void setPadding(int top, int left, int bottom, int right) {
+    public InputButton setPadding(int top, int left, int bottom, int right) {
         padding = BorderFactory.createEmptyBorder(top, left, bottom, right);
         setBorder(BorderFactory.createCompoundBorder(getBorder(), padding));
+        return this;
     }
 
     /**
@@ -139,111 +144,39 @@ public class InputField extends JTextField {
 
     //</editor-fold>
 
-    //<editor-fold defaultstate="collapsed" desc="Text input options">
-    /**
-     * Setter method to set whether the user can type only numbers or not.
-     * @param numOnly true to only allow numbers | false to allow anything.
-     */
-    public void setNumbersOnly(boolean numOnly) {
-        this.numOnly = numOnly;
-        ((PlainDocument) this.getDocument()).setDocumentFilter(new CustomDocFilter("[0-9]+$"));
-    }
-    
-    /**
-     * Getter method to get whether the field can receive text input or numbers only.
-     * @return whether this field can only use numbers.
-     */
-    public boolean isNumbersOnly() {
-        return this.numOnly;
-    }
-//</editor-fold>
-
-    //<editor-fold defaultstate="collapsed" desc="Decimal Input Options">
-    /**
-     * Allow or disallow decimals in the field.
-     * @param dec True to allow decimals | False to disable them.
-     * @throws IllegalStateException if this attempts to set allowDecimals to false before numbersOnly is true.
-     * @see setNumbersOnly
-     */
-    public void setAllowDecimals(boolean dec) throws IllegalStateException {
-        if (!isNumbersOnly() && !dec) {
-            throw new IllegalStateException("Must set to numbers only before denying decimals!");
-        } else if (dec == true) {
-            ((PlainDocument) this.getDocument()).setDocumentFilter(new CustomDocFilter("[0-9.]+$"));
-        } else {
-            ((PlainDocument) this.getDocument()).setDocumentFilter(new CustomDocFilter("[0-9]+$"));
-        }
-        this.allowDecimals = dec;
-    }
-    
-    /**
-     * Getter method to get whether this field will accept decimals.
-     * @return
-     */
-    public boolean getAllowsDecimals() {
-        return this.allowDecimals;
-    }
-//</editor-fold>
-
-    //<editor-fold defaultstate="collapsed" desc="Number Limits">
-    private Double min = null;
-    private Double max = null;
-    /**
-     * The minimum value this field can hold. A null value will disable any limit.
-     * @param min The minimum value this field can hold.
-     */
-    public void setMinimum(Double min){
-        this.min = min;
-    }
-    /**
-     * The maximum value this field can hold. A null value will disable any limit.
-     * @param max The maximum value this field can hold.
-     */
-    public void setMaximum(Double max){
-        this.max = max;
-    }
-    /**
-     * Returns the minimum value this field can hold.
-     * 
-     */
-    public Double getMinimum(){
-        return this.min;
-    }
-    /**
-     * Returns the maximum value this field can hold.
-     * 
-     */
-    public Double getMaximum(){
-        return this.max;
-    }
-    //</editor-fold>
-    
     //<editor-fold defaultstate="collapsed" desc="Rounded Corners">
     private int curve = 0;
+
     /**
      * Setter method to set the curve of the corners of the field.
+     *
      * @param curve The radius of the curve
      */
-    public void setCurve(int curve) {
+    public InputButton setCurve(int curve) {
         this.curve = curve;
         repaint();
+        return this;
     }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="Placeholder Text">
     private String placeholder = "";
+
     /**
-     * Setter method to set the placeholder text of the field. This only displays if the field has no input, and the placeholder is not empty.
+     * Setter method to set the placeholder text of the field. This only
+     * displays if the field has no input, and the placeholder is not empty.
      *
      * @param placeholder The text to display.
      * @see getPlaceholder
      */
-    public void setPlaceholder(String placeholder) {
+    public InputButton setPlaceholder(String placeholder) {
         this.placeholder = placeholder;
+        return this;
     }
-    
+
     /**
      * Getter method to get the placeholder text of this field.
+     *
      * @return The placeholder text.
      * @see setPlaceholder
      */
@@ -254,10 +187,11 @@ public class InputField extends JTextField {
 
     //<editor-fold defaultstate="collapsed" desc="Painting">
     private BufferedImage buffer = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
-    
+
     /**
-     * Paints the component. This should not be called manually, and should instead use <code>repaint()</code>
-     * @param g
+     * Paints the component. This should not be called manually, and should
+     * instead use <code>repaint()</code>
+     *
      * @see repaint()
      */
     @Override
@@ -266,23 +200,20 @@ public class InputField extends JTextField {
             buffer = new BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TYPE_INT_ARGB);
         }
         Graphics2D g2d = (Graphics2D) buffer.getGraphics();
-        
+
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        
+
         g2d.setColor(getBackground());
         g2d.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, curve, curve);
-        if (getText().isEmpty() && !placeholder.isEmpty()) {
-            g2d.setColor(getDisabledTextColor());
-            g2d.drawString(placeholder, 5, g.getFontMetrics().getHeight());
-        }
+
         g.drawImage(buffer, 0, 0, null);
         super.paintComponent(g);
     }
-    
+
     /**
      * This should not be called manually. Use <code>repaint()</code> instead.
-     * @param g
+     *
      * @see repaint()
      */
     @Override
@@ -291,15 +222,15 @@ public class InputField extends JTextField {
         g.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, curve, curve);
         super.paintComponent(g);
     }
-    
+
     private Shape fieldShape;
     private int knownCurve = curve;
 //</editor-fold>
 
-    
-    
     /**
-     * Detect if this field contains a point in it. This is adapted to account for rounded corners.
+     * Detect if this field contains a point in it. This is adapted to account
+     * for rounded corners.
+     *
      * @param x The X-coordinate of the point
      * @param y The Y-coordinate of the point
      * @return
@@ -312,48 +243,6 @@ public class InputField extends JTextField {
         }
         return fieldShape.contains(x, y);
     }
-    
-    //custom document filter to restrict what can be typed into the field.
-    class CustomDocFilter extends DocumentFilter {
 
-        private String regex = "";
-
-        public CustomDocFilter() {
-            super();
-        }
-
-        public CustomDocFilter(String reg) {
-            super();
-            this.regex = reg;
-        }
-
-        public CustomDocFilter setRegex(String reg) {
-            this.regex = reg;
-            return this;
-        }
-
-        @Override
-        public void insertString(DocumentFilter.FilterBypass fb, int offs, String str, AttributeSet as) throws BadLocationException {
-            StringBuilder sb = new StringBuilder();
-            sb.append(fb.getDocument().getText(0, fb.getDocument().getLength()));
-            sb.insert(offs, str);
-            if (canAppend(sb.toString())) {
-                super.insertString(fb, offs, str, as);
-            }
-        }
-
-        @Override
-        public void replace(DocumentFilter.FilterBypass fb, int offs, int length, String str, AttributeSet as) throws BadLocationException {
-            StringBuilder sb = new StringBuilder();
-            sb.append(fb.getDocument().getText(0, fb.getDocument().getLength()));
-            sb.insert(offs, str);
-            if (canAppend(sb.toString())) {
-                super.replace(fb, offs, length, str, as);
-            }
-        }
-
-        private boolean canAppend(String input) {
-            return !(!input.matches(regex) && !regex.isEmpty());
-        }
-    }
+    public abstract void onClick();
 }
