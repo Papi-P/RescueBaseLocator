@@ -3,6 +3,7 @@
  */
 package rescue.guiComponents;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -11,7 +12,11 @@ import java.awt.Shape;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
-import java.util.Map.Entry;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.JTextField;
 import javax.swing.border.Border;
@@ -53,7 +58,8 @@ public class InputField extends JTextField {
 
     //<editor-fold defaultstate="collapsed" desc="Constructors">
     /**
-     * Creates a new InputField with the specified width, height, and tooltip.<br>
+     * Creates a new InputField with the specified width, height, and
+     * tooltip.<br>
      * &nbsp;&nbsp;&nbsp;&nbsp;Note: the tooltip will likely be switched for
      * placeholder text, and the tooltip must be set using the
      * <code>setToolTipText()</code> method.
@@ -114,7 +120,6 @@ public class InputField extends JTextField {
     }
 //</editor-fold>
 
-
     //<editor-fold defaultstate="collapsed" desc="Padding">
     //padding methods and storage
     private Border padding = BorderFactory.createEmptyBorder();
@@ -144,7 +149,6 @@ public class InputField extends JTextField {
     }
 
     //</editor-fold>
-
     //<editor-fold defaultstate="collapsed" desc="Text input options">
     /**
      * Setter method to set whether the user can type only numbers or not.
@@ -167,7 +171,7 @@ public class InputField extends JTextField {
         return this.numOnly;
     }
 
-    public InputField setRegex(String regex){
+    public InputField setRegex(String regex) {
         this.allowDecimals = true;
         this.numOnly = false;
         cdf.setRegex(regex);
@@ -292,6 +296,23 @@ public class InputField extends JTextField {
     //<editor-fold defaultstate="collapsed" desc="Placeholder Text">
     private String placeholder = "";
 
+    ScheduledExecutorService ses;
+    private boolean scrollingPlaceholder = true;
+
+    public InputField setScrollingPlaceholder(boolean scroll) {
+        this.scrollingPlaceholder = scroll;
+        setPlaceholder(placeholder);
+        return this;
+    }
+
+    private long scrollDelay = 250;
+
+    public InputField setScrollSpeed(long speed) {
+        this.scrollDelay = speed;
+        setPlaceholder(placeholder);
+        return this;
+    }
+
     /**
      * Setter method to set the placeholder text of the field. This only
      * displays if the field has no input, and the placeholder is not empty.
@@ -301,6 +322,37 @@ public class InputField extends JTextField {
      */
     public InputField setPlaceholder(String placeholder) {
         this.placeholder = placeholder;
+        repaint();
+        if (((Graphics2D) buffer.getGraphics()).getFontMetrics().stringWidth(placeholder) > getWidth() && scrollingPlaceholder) {//&& buffer.getWidth() == getWidth() && buffer.getHeight() == getHeight()) {
+            ses = Executors.newScheduledThreadPool(1);
+            ses.scheduleWithFixedDelay(new Runnable() {
+                @Override
+                public void run() {
+                    if (scrollingPlaceholder) {
+                        if (currentPlaceholderPhaseShift > ((Graphics2D) buffer.getGraphics()).getFontMetrics().stringWidth(placeholder) - getWidth() / 1.2) {
+                            currentPlaceholderPhaseShift = 0;
+                        }
+                        if (((Graphics2D) buffer.getGraphics()).getFontMetrics().stringWidth(placeholder) > getWidth()) {
+                            currentPlaceholderPhaseShift += 3;
+                            repaint();
+                        }
+                    } else {
+                        try {
+                            ses.awaitTermination(1000, TimeUnit.MILLISECONDS);
+                        } catch (InterruptedException ex) {
+
+                        }
+                    }
+                }
+            }, 1000, scrollDelay, TimeUnit.MILLISECONDS);
+        } else if (ses != null) {
+            try {
+                ses.awaitTermination(250, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException ex) {
+
+            }
+        }
+
         return this;
     }
 
@@ -336,14 +388,19 @@ public class InputField extends JTextField {
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
         g2d.setColor(getBackground());
-        g2d.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, curve, curve);
+        g2d.fillRoundRect(1, 1, getWidth() - 1, getHeight() - 1, curve, curve);
         if (getText().isEmpty() && !placeholder.isEmpty()) {
             g2d.setColor(getDisabledTextColor());
-            g2d.drawString(placeholder, 5, g.getFontMetrics().getHeight());
+            g2d.drawString(placeholder, borderWeight + padding.getBorderInsets(this).left - currentPlaceholderPhaseShift, g.getFontMetrics().getHeight());
+            if (g2d.getFontMetrics().stringWidth(placeholder) > getWidth()) {
+                g2d.clearRect(-borderWeight, borderWeight + padding.getBorderInsets(this).left, 0, getHeight());
+                g2d.clearRect(getWidth() - borderWeight, getWidth() + borderWeight, 0, getHeight());
+            }
         }
         g.drawImage(buffer, 0, 0, null);
         super.paintComponent(g);
     }
+    int currentPlaceholderPhaseShift = 0;
 
     /**
      * This should not be called manually. Use <code>repaint()</code> instead.
@@ -353,14 +410,43 @@ public class InputField extends JTextField {
      */
     @Override
     protected void paintBorder(Graphics g) {
-        g.setColor(getForeground());
-        g.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, curve, curve);
+        Graphics2D g2d = (Graphics2D) buffer.getGraphics();
+        g2d.setColor(borderColor);
+        g2d.drawRoundRect(0, 0, getWidth(), getHeight(), curve, curve);
+        g.drawImage(buffer, 0, 0, null);
         super.paintComponent(g);
     }
 
     private Shape fieldShape;
     private int knownCurve = curve;
 //</editor-fold>
+
+    public InputField setDisabledColor(Color c) {
+        super.setDisabledTextColor(c);
+        return this;
+    }
+
+    public InputField setEnabledColor(Color c) {
+        super.setForeground(c);
+        return this;
+    }
+
+    public InputField setBackgroundColor(Color c) {
+        super.setBackground(c);
+        return this;
+    }
+
+    public InputField setBorderColor(Color bordCol) {
+        this.borderColor = bordCol;
+        return this;
+    }
+
+    public InputField setBorderWeight(int weight) {
+        this.borderWeight = weight;
+        return this;
+    }
+    private int borderWeight = 1;
+    private Color borderColor = Color.BLACK;
 
     /**
      * Detect if this field contains a point in it. This is adapted to account
@@ -377,6 +463,7 @@ public class InputField extends JTextField {
             fieldShape = new RoundRectangle2D.Double(0, 0, getWidth() - 1, getHeight() - 1, curve, curve);
         }
         return fieldShape.contains(x, y);
+
     }
 
     //custom document filter to restrict what can be typed into the field.

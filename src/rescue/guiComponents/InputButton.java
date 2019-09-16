@@ -3,6 +3,7 @@
  */
 package rescue.guiComponents;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -105,7 +106,9 @@ public abstract class InputButton extends JButton {
     //initialize the component. This doesn't need to be called manually, or ever after the field is initialized.
     private void init() {
         setOpaque(false);
-        this.addActionListener(new AbstractAction(){
+        this.setContentAreaFilled(false);
+        this.setFocusable(false);
+        this.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 onClick();
@@ -143,7 +146,6 @@ public abstract class InputButton extends JButton {
     }
 
     //</editor-fold>
-
     //<editor-fold defaultstate="collapsed" desc="Rounded Corners">
     private int curve = 0;
 
@@ -158,32 +160,6 @@ public abstract class InputButton extends JButton {
         return this;
     }
     //</editor-fold>
-
-    //<editor-fold defaultstate="collapsed" desc="Placeholder Text">
-    private String placeholder = "";
-
-    /**
-     * Setter method to set the placeholder text of the field. This only
-     * displays if the field has no input, and the placeholder is not empty.
-     *
-     * @param placeholder The text to display.
-     * @see getPlaceholder
-     */
-    public InputButton setPlaceholder(String placeholder) {
-        this.placeholder = placeholder;
-        return this;
-    }
-
-    /**
-     * Getter method to get the placeholder text of this field.
-     *
-     * @return The placeholder text.
-     * @see setPlaceholder
-     */
-    public String getPlaceholder() {
-        return this.placeholder;
-    }
-//</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="Painting">
     private BufferedImage buffer = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
@@ -205,7 +181,7 @@ public abstract class InputButton extends JButton {
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
         g2d.setColor(getBackground());
-        g2d.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, curve, curve);
+        g2d.fillRoundRect(1, 1, getWidth() - 1, getHeight() - 1, curve, curve);
 
         g.drawImage(buffer, 0, 0, null);
         super.paintComponent(g);
@@ -218,11 +194,32 @@ public abstract class InputButton extends JButton {
      */
     @Override
     protected void paintBorder(Graphics g) {
-        g.setColor(getForeground());
-        g.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, curve, curve);
+        g.setColor(borderColor);
+        g.drawRoundRect(0, 0, getWidth(), getHeight(), curve, curve);
         super.paintComponent(g);
     }
 
+    public InputButton setBg(Color bg) {
+        this.setBackground(bg);
+        return this;
+    }
+
+    public InputButton setFg(Color fg) {
+        this.setForeground(fg);
+        return this;
+    }
+
+    public InputButton setBorderColor(Color bordCol) {
+        this.borderColor = bordCol;
+        return this;
+    }
+
+    public InputButton setBorderWeight(int weight) {
+        this.borderWeight = weight;
+        return this;
+    }
+    private Color borderColor = Color.BLACK;
+    private int borderWeight = 1;
     private Shape fieldShape;
     private int knownCurve = curve;
 //</editor-fold>

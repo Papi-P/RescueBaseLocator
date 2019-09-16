@@ -32,12 +32,14 @@ import rescue.guiComponents.InputButton;
  * @author Daniel Allen
  */
 public class GUI extends JFrame {
+
     protected static boolean overlayEnabled = false;
     private GridBagLayout gbl = new GridBagLayout();
     private GridBagConstraints gbc = new GridBagConstraints();
 
     public ImagePanel imgP = new ImagePanel();
     public ButtonPanel buttons = new ButtonPanel();
+
     public GUI() {
         this.setLayout(gbl);
         gbl.columnWeights = new double[]{0.622, 0.288};
@@ -94,10 +96,12 @@ class ImagePanel extends JPanel implements MouseListener {
     public DoublePoint currentPointCalculation;
 
     private BufferedImage overlay;
-    public void updateOverlay(){
+
+    public void updateOverlay() {
         overlay = graphicalAnalysis(new BufferedImage(doubleBuffer.getWidth(), doubleBuffer.getHeight(), BufferedImage.TYPE_INT_ARGB));
         repaint();
     }
+
     @Override
     public void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D) doubleBuffer.getGraphics();
@@ -120,8 +124,9 @@ class ImagePanel extends JPanel implements MouseListener {
         }
         if (doubleBuffer != null) {
             if (RescueBaseLocator.locations != null) {
-                if(overlay != null && overlayEnabled)
+                if (overlay != null && overlayEnabled) {
                     g2d.drawImage(overlay, 0, 0, null);
+                }
             }
         }
         if (currentPointCalculation != null) {
@@ -148,8 +153,8 @@ class ImagePanel extends JPanel implements MouseListener {
         };
         if (this.getBounds().contains(clickedPoint)) {
             clickPoint = clickedPoint;
-            RescueBaseLocator.gui.buttons.startingXField.setText(""+clickedPoint.x);
-            RescueBaseLocator.gui.buttons.startingYField.setText(""+clickedPoint.y);
+            RescueBaseLocator.gui.buttons.startingXField.setText("" + clickedPoint.x);
+            RescueBaseLocator.gui.buttons.startingYField.setText("" + clickedPoint.y);
             repaint();
             System.out.println(clickedPoint);
         }
@@ -194,8 +199,9 @@ class ButtonPanel extends JPanel {
 
                     RescueBaseLocator.gui.imgP.repaint();
 
-                    if(overlayEnabled)
+                    if (overlayEnabled) {
                         RescueBaseLocator.gui.imgP.updateOverlay();
+                    }
                 }
             } catch (Exception e) {
                 System.exit(1);
@@ -219,14 +225,14 @@ class ButtonPanel extends JPanel {
                 return;
             }
 
-            if(Algorithm.countMatches(startingXField.getText(), '.') > 1 || Algorithm.countMatches(startingYField.getText(), '.') > 1){
+            if (Algorithm.countMatches(startingXField.getText(), '.') > 1 || Algorithm.countMatches(startingYField.getText(), '.') > 1) {
                 new InformationWindow("Error!", "There cannot be more than 1 decimal in a number!", JOptionPane.ERROR_MESSAGE).show();
                 return;
             }
 
             FindOptimalLocationRunnable finderCallable = new FindOptimalLocationRunnable(RescueBaseLocator.locations, new double[]{
-                    (!startingXField.getText().isEmpty() || startingXField.getText().equals(".") ? Double.parseDouble(startingXField.getText()) : 0d),
-                    (!startingYField.getText().isEmpty() || startingYField.getText().equals(".") ? Double.parseDouble(startingYField.getText()) : 0d)
+                (!startingXField.getText().isEmpty() || startingXField.getText().equals(".") ? Double.parseDouble(startingXField.getText()) : 0d),
+                (!startingYField.getText().isEmpty() || startingYField.getText().equals(".") ? Double.parseDouble(startingYField.getText()) : 0d)
             });
             if (f == null) {
                 f = finderExecutor.submit(finderCallable);
@@ -259,32 +265,36 @@ class ButtonPanel extends JPanel {
     public ButtonPanel() {
         this.setLayout(gbl);
 
+        loadResourceButton.setCurve(25)
+                .setFg(Color.WHITE)
+                .setBg(Color.decode("#38A1F3"))
+                .setBorderColor(new Color(0,0,0,0));
+
         startingXField.setNumbersOnly(true)
+                .setAllowDecimals(true)
+                .setPlaceholder("Starting XCCCCCCCCCCCC Coordinate")
+                .setPadding(0, 5, 0, 0)
+                .setCurve(18)
+                .setDisabledColor(new Color(120, 120, 120))
+                .setScrollingPlaceholder(true);
+
+        startingYField.setNumbersOnly(true)
                 .setAllowDecimals(true)
                 .setPlaceholder("Starting X Coordinate")
                 .setPadding(0, 5, 0, 0)
                 .setCurve(18)
-                .setDisabledTextColor(new Color(120,120,120));
+                .setDisabledColor(new Color(120, 120, 120));
 
-
-        startingYField.setNumbersOnly(true)
-                .setAllowDecimals(true)
-                .setPlaceholder("Starting Y Coordinate")
-                .setPadding(0, 5, 0, 0)
-                .setCurve(18)
-                .setDisabledTextColor(new Color(120,120,120));
-
-
-        //                             load   -    x    y    -   find
-        gbl.rowWeights = new double[] { 0.3, 0.1, 0.3, 0.3, 0.1, 0.3};
+        //                           load   -    x    y    -   find
+        gbl.rowWeights = new double[]{0.3, 0.1, 0.3, 0.3, 0.1, 0.3};
         gbc.gridx = 0;
         gbc.gridy = 0;
         this.add(loadResourceButton, gbc);
-        gbc.gridy+=2;
+        gbc.gridy += 2;
         this.add(startingXField, gbc);
         gbc.gridy++;
         this.add(startingYField, gbc);
-        gbc.gridy+=2;
+        gbc.gridy += 2;
         this.add(optimalFinderButton, gbc);
     }
 }
