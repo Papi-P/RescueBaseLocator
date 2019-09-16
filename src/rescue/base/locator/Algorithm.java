@@ -9,7 +9,6 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
 import java.text.DecimalFormat;
-import static rescue.base.locator.RescueBaseLocator.gui;
 import static rescue.base.locator.RescueBaseLocator.locations;
 
 /**
@@ -19,12 +18,11 @@ import static rescue.base.locator.RescueBaseLocator.locations;
 public class Algorithm {
 
     //whether to use Math.hypot instead of just adding the squares. I believe the Math.hypot formula is correct, but it gives me a different answer from Mr. Payne
-    private static boolean useProperAlgorithm = false;
+    private static boolean useProperAlgorithm = true;
 
     public static void Main(String[] args) {
 
     }
-    private static DecimalFormat df = new DecimalFormat("0000.00000");
 
     public static BufferedImage graphicalAnalysis(BufferedImage canvas) {
         int falloff = 1;

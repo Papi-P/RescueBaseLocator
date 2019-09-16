@@ -26,6 +26,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import static rescue.base.locator.Algorithm.graphicalAnalysis;
 import static rescue.base.locator.GUI.overlayEnabled;
 import rescue.guiComponents.InputButton;
+import rescue.guiComponents.InputCheckbox;
 
 /**
  *
@@ -180,7 +181,7 @@ class ImagePanel extends JPanel implements MouseListener {
 
 class ButtonPanel extends JPanel {
 
-    private InputButton loadResourceButton = new InputButton("Load and Display Rescues") {
+    private InputButton loadResourceButton = new InputButton(200, 30, "Load and Display Rescues") {
         @Override
         public void onClick() {
             JFileChooser jfc = new JFileChooser();
@@ -210,7 +211,7 @@ class ButtonPanel extends JPanel {
         }
     };
     ExecutorService finderExecutor = Executors.newCachedThreadPool();
-    private InputButton optimalFinderButton = new InputButton("Find optimal location") {
+    private InputButton optimalFinderButton = new InputButton(200, 30, "Find optimal location") {
         Future<DoublePoint> f;
 
         @Override
@@ -229,11 +230,11 @@ class ButtonPanel extends JPanel {
                 new InformationWindow("Error!", "There cannot be more than 1 decimal in a number!", JOptionPane.ERROR_MESSAGE).show();
                 return;
             }
-
+            
             FindOptimalLocationRunnable finderCallable = new FindOptimalLocationRunnable(RescueBaseLocator.locations, new double[]{
                 (!startingXField.getText().isEmpty() || startingXField.getText().equals(".") ? Double.parseDouble(startingXField.getText()) : 0d),
                 (!startingYField.getText().isEmpty() || startingYField.getText().equals(".") ? Double.parseDouble(startingYField.getText()) : 0d)
-            });
+            }, (waitDelay.getText().isEmpty() ? 0 : Long.parseLong(waitDelay.getText())));
             if (f == null) {
                 f = finderExecutor.submit(finderCallable);
             }
@@ -253,7 +254,8 @@ class ButtonPanel extends JPanel {
     };
     public InputField startingXField = new InputField(150, 25, "Starting X coordinate");
     public InputField startingYField = new InputField(150, 25, "Starting Y coordinate");
-
+    public InputField waitDelay = new InputField(150, 25, "Delay between searches");
+    
     @Override
     public void paintComponent(Graphics g) {
         g.setColor(new Color(51, 51, 51));
@@ -272,29 +274,45 @@ class ButtonPanel extends JPanel {
 
         startingXField.setNumbersOnly(true)
                 .setAllowDecimals(true)
-                .setPlaceholder("Starting XCCCCCCCCCCCC Coordinate")
-                .setPadding(0, 5, 0, 0)
-                .setCurve(18)
-                .setDisabledColor(new Color(120, 120, 120))
-                .setScrollingPlaceholder(true);
-
-        startingYField.setNumbersOnly(true)
-                .setAllowDecimals(true)
                 .setPlaceholder("Starting X Coordinate")
                 .setPadding(0, 5, 0, 0)
                 .setCurve(18)
-                .setDisabledColor(new Color(120, 120, 120));
+                .setDisabledColor(new Color(120, 120, 120))
+                .setScrollingPlaceholder(false);
 
-        //                           load   -    x    y    -   find
-        gbl.rowWeights = new double[]{0.3, 0.1, 0.3, 0.3, 0.1, 0.3};
+        startingYField.setNumbersOnly(true)
+                .setAllowDecimals(true)
+                .setPlaceholder("Starting Y Coordinate")
+                .setPadding(0, 5, 0, 0)
+                .setCurve(18)
+                .setDisabledColor(new Color(120, 120, 120))
+                .setScrollingPlaceholder(false);
+
+        waitDelay.setNumbersOnly(true)
+                .setAllowDecimals(false)
+                .setPlaceholder("Search Delay (ms)")
+                .setPadding(0, 5, 0, 0)
+                .setCurve(18)
+                .setDisabledColor(new Color(120, 120, 120))
+                .setScrollingPlaceholder(false);
+        optimalFinderButton.setCurve(25)
+                .setFg(Color.WHITE)
+                .setBg(Color.decode("#38A1F3"))
+                .setBorderColor(new Color(0,0,0,0));
+        //                           load   x    y  wait  find
+        gbl.rowWeights = new double[]{0.7, 0.1, 0.1, 0.1, 0.1, 0.7};
         gbc.gridx = 0;
         gbc.gridy = 0;
         this.add(loadResourceButton, gbc);
-        gbc.gridy += 2;
+        gbc.gridy++;
         this.add(startingXField, gbc);
         gbc.gridy++;
         this.add(startingYField, gbc);
-        gbc.gridy += 2;
+        gbc.gridy++;
+        this.add(waitDelay, gbc);
+        gbc.gridy++;
+        this.add(new InputCheckbox(20, 20).setCurve(20), gbc);
+        gbc.gridy++;
         this.add(optimalFinderButton, gbc);
     }
 }

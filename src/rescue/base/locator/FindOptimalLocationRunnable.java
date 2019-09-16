@@ -19,11 +19,9 @@ public class FindOptimalLocationRunnable implements Callable<DoublePoint> {
     private double[] start;
 
     public FindOptimalLocationRunnable(double[][] points) {
-        this(points, new double[]{0, 0});
-    }
-
-    ;
-    public FindOptimalLocationRunnable(double[][] points, double[] start) {
+        this(points, new double[]{0, 0},0);
+    };
+    public FindOptimalLocationRunnable(double[][] points, double[] start, long waitTime) {
         if (start == null) {
             throw new NullPointerException("The start location cannot be null!");
         }
@@ -33,8 +31,8 @@ public class FindOptimalLocationRunnable implements Callable<DoublePoint> {
         cancelled = false;
         this.points = points;
         this.start = start;
-    }
-    ;
+        setWaitTime(waitTime);
+    };
 
     //keep track of if the task was cancelled
     public static volatile boolean cancelled = false;
@@ -146,14 +144,14 @@ public class FindOptimalLocationRunnable implements Callable<DoublePoint> {
                 }
             }
             long endMillis = System.currentTimeMillis();
-            
+
             //output the calculation time and steps. This removes the time the thread was sleeping from the timer.
             System.out.println("Found in " + ((endMillis - startMillis) - (numSteps - 1) * waitTime) + " milliseconds with " + numSteps + " steps.");
-            
+
             //remove the currentPoint from the GUI since it no longer needed and would just slow down the program.
             gui.imgP.currentPointCalculation = null;
             DoublePoint median = new DoublePoint(x, y);
-            
+
             System.out.println(median);
             return median;
         }
