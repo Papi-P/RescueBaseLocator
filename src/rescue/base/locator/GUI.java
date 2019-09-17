@@ -213,9 +213,9 @@ class ButtonPanel extends JPanel {
     ExecutorService finderExecutor = Executors.newCachedThreadPool();
     private InputButton optimalFinderButton = new InputButton(200, 30, "Find optimal location") {
         Future<DoublePoint> f;
-
         @Override
         public void onClick() {
+            Algorithm.useProperAlgorithm = useProperToggle.isSelected();
             if (RescueBaseLocator.locations == null) {
                 new InformationWindow("Error!", "Load locations first!", JOptionPane.ERROR_MESSAGE).show();
                 return;
@@ -255,6 +255,8 @@ class ButtonPanel extends JPanel {
     public InputField startingXField = new InputField(150, 25, "Starting X coordinate");
     public InputField startingYField = new InputField(150, 25, "Starting Y coordinate");
     public InputField waitDelay = new InputField(150, 25, "Delay between searches");
+    public InputCheckbox useProperToggle = new InputCheckbox(80, 40);
+    public InputCheckbox overlayToggle = new InputCheckbox(80, 40);
 
     @Override
     public void paintComponent(Graphics g) {
@@ -270,7 +272,7 @@ class ButtonPanel extends JPanel {
         loadResourceButton.setCurve(25)
                 .setFg(Color.WHITE)
                 .setBg(Color.decode("#38A1F3"))
-                .setBorderColor(new Color(0,0,0,0))
+                .setBorderColor(new Color(0, 0, 0, 0))
                 .setAntialiased(true);
 
         startingXField.setNumbersOnly(true)
@@ -303,10 +305,16 @@ class ButtonPanel extends JPanel {
         optimalFinderButton.setCurve(25)
                 .setFg(Color.WHITE)
                 .setBg(Color.decode("#38A1F3"))
-                .setBorderColor(new Color(0,0,0,0))
+                .setBorderColor(new Color(0, 0, 0, 0))
                 .setAntialiased(true);
+
+        overlayToggle.setAntialiased(true)
+                .setCurve(20);
+
+        useProperToggle.setAntialiased(true)
+                .setCurve(0);
         //                           load   x    y  wait  find
-        gbl.rowWeights = new double[]{0.7, 0.1, 0.1, 0.1, 0.1, 0.7};
+        gbl.rowWeights = new double[]{0.7, 0.1, 0.1, 0.1, 0.1, 0.1, 0.7};
         gbc.gridx = 0;
         gbc.gridy = 0;
         this.add(loadResourceButton, gbc);
@@ -317,7 +325,9 @@ class ButtonPanel extends JPanel {
         gbc.gridy++;
         this.add(waitDelay, gbc);
         gbc.gridy++;
-        this.add(new InputCheckbox(20, 20).setCurve(20).setAntialiased(true), gbc);
+        this.add(overlayToggle, gbc);
+        gbc.gridy++;
+        this.add(useProperToggle, gbc);
         gbc.gridy++;
         this.add(optimalFinderButton, gbc);
     }
