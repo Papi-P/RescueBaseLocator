@@ -382,9 +382,13 @@ public class InputField extends JTextField {
         }
         Graphics2D g2d = (Graphics2D) buffer.getGraphics();
 
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-
+        if (antialias) {
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
+            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        }
+        
         g2d.setColor(getBackground());
         g2d.fillRoundRect(1, 1, getWidth() - 1, getHeight() - 1, curve, curve);
         if (getText().isEmpty() && !placeholder.isEmpty()) {
@@ -409,6 +413,14 @@ public class InputField extends JTextField {
     @Override
     protected void paintBorder(Graphics g) {
         Graphics2D g2d = (Graphics2D) buffer.getGraphics();
+
+        if (antialias) {
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
+            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        }
+
         g2d.setColor(borderColor);
         g2d.drawRoundRect(0, 0, getWidth(), getHeight(), curve, curve);
         g.drawImage(buffer, 0, 0, null);
@@ -418,6 +430,16 @@ public class InputField extends JTextField {
     private Shape fieldShape;
     private int knownCurve = curve;
 //</editor-fold>
+    private boolean antialias = false;
+
+    public InputField setAntialiased(boolean alias) {
+        this.antialias = alias;
+        return this;
+    }
+
+    public boolean isAntialiased() {
+        return this.antialias;
+    }
 
     public InputField setDisabledColor(Color c) {
         super.setDisabledTextColor(c);

@@ -230,7 +230,7 @@ class ButtonPanel extends JPanel {
                 new InformationWindow("Error!", "There cannot be more than 1 decimal in a number!", JOptionPane.ERROR_MESSAGE).show();
                 return;
             }
-            
+
             FindOptimalLocationRunnable finderCallable = new FindOptimalLocationRunnable(RescueBaseLocator.locations, new double[]{
                 (!startingXField.getText().isEmpty() || startingXField.getText().equals(".") ? Double.parseDouble(startingXField.getText()) : 0d),
                 (!startingYField.getText().isEmpty() || startingYField.getText().equals(".") ? Double.parseDouble(startingYField.getText()) : 0d)
@@ -255,7 +255,7 @@ class ButtonPanel extends JPanel {
     public InputField startingXField = new InputField(150, 25, "Starting X coordinate");
     public InputField startingYField = new InputField(150, 25, "Starting Y coordinate");
     public InputField waitDelay = new InputField(150, 25, "Delay between searches");
-    
+
     @Override
     public void paintComponent(Graphics g) {
         g.setColor(new Color(51, 51, 51));
@@ -270,7 +270,8 @@ class ButtonPanel extends JPanel {
         loadResourceButton.setCurve(25)
                 .setFg(Color.WHITE)
                 .setBg(Color.decode("#38A1F3"))
-                .setBorderColor(new Color(0,0,0,0));
+                .setBorderColor(new Color(0,0,0,0))
+                .setAntialiased(true);
 
         startingXField.setNumbersOnly(true)
                 .setAllowDecimals(true)
@@ -278,7 +279,8 @@ class ButtonPanel extends JPanel {
                 .setPadding(0, 5, 0, 0)
                 .setCurve(18)
                 .setDisabledColor(new Color(120, 120, 120))
-                .setScrollingPlaceholder(false);
+                .setScrollingPlaceholder(false)
+                .setAntialiased(true);
 
         startingYField.setNumbersOnly(true)
                 .setAllowDecimals(true)
@@ -286,7 +288,8 @@ class ButtonPanel extends JPanel {
                 .setPadding(0, 5, 0, 0)
                 .setCurve(18)
                 .setDisabledColor(new Color(120, 120, 120))
-                .setScrollingPlaceholder(false);
+                .setScrollingPlaceholder(false)
+                .setAntialiased(true);
 
         waitDelay.setNumbersOnly(true)
                 .setAllowDecimals(false)
@@ -294,11 +297,14 @@ class ButtonPanel extends JPanel {
                 .setPadding(0, 5, 0, 0)
                 .setCurve(18)
                 .setDisabledColor(new Color(120, 120, 120))
-                .setScrollingPlaceholder(false);
+                .setScrollingPlaceholder(false)
+                .setAntialiased(true);
+
         optimalFinderButton.setCurve(25)
                 .setFg(Color.WHITE)
                 .setBg(Color.decode("#38A1F3"))
-                .setBorderColor(new Color(0,0,0,0));
+                .setBorderColor(new Color(0,0,0,0))
+                .setAntialiased(true);
         //                           load   x    y  wait  find
         gbl.rowWeights = new double[]{0.7, 0.1, 0.1, 0.1, 0.1, 0.7};
         gbc.gridx = 0;
@@ -311,7 +317,7 @@ class ButtonPanel extends JPanel {
         gbc.gridy++;
         this.add(waitDelay, gbc);
         gbc.gridy++;
-        this.add(new InputCheckbox(20, 20).setCurve(20), gbc);
+        this.add(new InputCheckbox(20, 20).setCurve(20).setAntialiased(true), gbc);
         gbc.gridy++;
         this.add(optimalFinderButton, gbc);
     }

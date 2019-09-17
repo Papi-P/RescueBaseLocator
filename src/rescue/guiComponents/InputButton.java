@@ -177,8 +177,12 @@ public abstract class InputButton extends JButton {
         }
         Graphics2D g2d = (Graphics2D) buffer.getGraphics();
 
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        if (antialias) {
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
+            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        }
 
         g2d.setColor(getBackground());
         g2d.fillRoundRect(1, 1, getWidth() - 1, getHeight() - 1, curve, curve);
@@ -194,8 +198,18 @@ public abstract class InputButton extends JButton {
      */
     @Override
     protected void paintBorder(Graphics g) {
-        g.setColor(borderColor);
-        g.drawRoundRect(0, 0, getWidth(), getHeight(), curve, curve);
+        Graphics2D g2d = (Graphics2D) buffer.getGraphics();
+
+        if (antialias) {
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
+            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        }
+
+        g2d.setColor(borderColor);
+        g2d.drawRoundRect(0, 0, getWidth(), getHeight(), curve, curve);
+        g.drawImage(buffer, 0, 0, null);
         super.paintComponent(g);
     }
 
@@ -217,6 +231,17 @@ public abstract class InputButton extends JButton {
     public InputButton setBorderWeight(int weight) {
         this.borderWeight = weight;
         return this;
+    }
+
+    private boolean antialias = false;
+
+    public InputButton setAntialiased(boolean alias) {
+        this.antialias = alias;
+        return this;
+    }
+
+    public boolean isAntialiased() {
+        return this.antialias;
     }
     private Color borderColor = Color.BLACK;
     private int borderWeight = 1;

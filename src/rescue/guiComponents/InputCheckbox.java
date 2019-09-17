@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package rescue.guiComponents;
 
 import java.awt.Color;
@@ -14,6 +9,7 @@ import java.awt.Shape;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import javafx.scene.input.MouseButton;
 import javax.swing.JComponent;
 
 /**
@@ -22,6 +18,7 @@ import javax.swing.JComponent;
  */
 public class InputCheckbox extends JComponent {
 
+    private boolean switchStyle = true;
     public InputCheckbox(int width, int height, String tooltip) {
         this.setPreferredSize(new Dimension(width, height));
         init();
@@ -44,7 +41,8 @@ public class InputCheckbox extends JComponent {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                clickEvent();
+                if(e.getButton() == MouseEvent.BUTTON1)
+                    clickEvent();
             }
 
             @Override
@@ -56,8 +54,8 @@ public class InputCheckbox extends JComponent {
             public void mouseExited(MouseEvent e) {
                 exitEvent();
             }
-            
-            
+
+
         });
     }
     private int curve = 0;
@@ -88,8 +86,12 @@ public class InputCheckbox extends JComponent {
         }
         Graphics2D g2d = (Graphics2D) buffer.getGraphics();
 
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        if (antialias) {
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
+            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        }
 
         g2d.setColor((this.selected ? Color.decode("#38A1F3") : Color.WHITE));
         g2d.fillRoundRect(1, 1, getWidth() - 1, getHeight() - 1, curve, curve);
@@ -107,6 +109,14 @@ public class InputCheckbox extends JComponent {
     @Override
     protected void paintBorder(Graphics g) {
         Graphics2D g2d = (Graphics2D) buffer.getGraphics();
+
+        if (antialias) {
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
+            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        }
+
         g2d.setColor(borderColor);
         g2d.drawRoundRect(0, 0, getWidth(), getHeight(), curve, curve);
         g.drawImage(buffer, 0, 0, null);
@@ -126,11 +136,11 @@ public class InputCheckbox extends JComponent {
     private Color borderColor = Color.BLACK;
     private Shape fieldShape;
     private int knownCurve = curve;
-    
-    
-    
+
+
+
     private boolean selected = false;
-    private void toggleSelected(){
+    public void toggleSelected(){
         if(isSelected())
             setSelected(false);
         else
@@ -146,15 +156,25 @@ public class InputCheckbox extends JComponent {
     public boolean isSelected(){
         return this.selected;
     }
-    
-    private void enterEvent(){
-        
+
+    private boolean antialias = false;
+
+    public InputCheckbox setAntialiased(boolean alias) {
+        this.antialias = alias;
+        return this;
     }
-    private void clickEvent(){
+
+    public boolean isAntialiased() {
+        return this.antialias;
+    }
+
+    public void enterEvent(){
+
+    }
+    public void clickEvent(){
         toggleSelected();
-        System.out.println(this.selected);
     }
-    private void exitEvent(){
-        
+    public void exitEvent(){
+
     }
 }
