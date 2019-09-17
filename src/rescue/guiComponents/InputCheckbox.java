@@ -22,8 +22,6 @@ import javax.swing.JComponent;
  */
 public class InputCheckbox extends JComponent {
 
-    private boolean switchStyle = true;
-
     public InputCheckbox(int width, int height, String tooltip) {
         this.setPreferredSize(new Dimension(width, height));
         init();
@@ -63,6 +61,18 @@ public class InputCheckbox extends JComponent {
 
         });
     }
+
+    private boolean switchStyle = true;
+
+    public InputCheckbox setSwitch(boolean s) {
+        this.switchStyle = s;
+        return this;
+    }
+
+    public boolean isSwitch() {
+        return this.switchStyle;
+    }
+
     private int curve = 0;
 
     public InputCheckbox setCurve(int curve) {
@@ -77,6 +87,21 @@ public class InputCheckbox extends JComponent {
     private int curXPosOfSwitch = 0;
     //<editor-fold defaultstate="collapsed" desc="Painting">
     private BufferedImage buffer = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+
+    public void setKnobColors(Color active, Color inactive) {
+        this.ACTIVE_KNOB = inactive;
+        this.INACTIVE_KNOB = inactive;
+    }
+
+    public void setSlideColors(Color active, Color inactive) {
+        this.ACTIVE_SLIDE = inactive;
+        this.INACTIVE_SLIDE = inactive;
+    }
+
+    private Color INACTIVE_KNOB = Color.WHITE;
+    private Color ACTIVE_KNOB = Color.decode("#07e607");
+    private Color INACTIVE_SLIDE = Color.GRAY;
+    private Color ACTIVE_SLIDE = Color.decode("#07e607").darker();
 
     /**
      * Paints the component. This should not be called manually, and should
@@ -100,12 +125,12 @@ public class InputCheckbox extends JComponent {
         }
 
         if (switchStyle) {
-            g2d.setColor((this.selected ? Color.decode("#07e607") : Color.GRAY));
+            g2d.setColor((this.selected ? ACTIVE_SLIDE : INACTIVE_SLIDE));
             g2d.fillRoundRect(1, 1, getWidth() - 1, getHeight() - 1, curve, curve);
-            g2d.setColor((this.selected ? Color.decode("#38A1F3") : Color.LIGHT_GRAY));
+            g2d.setColor(currentKnobColor);
             g2d.fillRoundRect(curXPosOfSwitch + 1, 1, getWidth() / 2 - 1, getHeight() - 1, curve, curve);
         } else {
-            g2d.setColor((this.selected ? Color.decode("#38A1F3") : Color.WHITE));
+            g2d.setColor((this.selected ? ACTIVE_KNOB : INACTIVE_KNOB));
             g2d.fillRoundRect(1, 1, getWidth() - 1, getHeight() - 1, curve, curve);
         }
 
@@ -131,8 +156,14 @@ public class InputCheckbox extends JComponent {
             g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         }
 
-        g2d.setColor(borderColor);
-        g2d.drawRoundRect(0, 0, getWidth(), getHeight(), curve, curve);
+        if (switchStyle) {
+            g2d.setColor(borderColor);
+            g2d.drawRoundRect(1, 1, getWidth() - 1, getHeight() - 1, curve, curve);
+            g2d.drawRoundRect(curXPosOfSwitch + 1, 1, getWidth() / 2 - 1, getHeight() - 1, curve, curve);
+        } else {
+            g2d.setColor(borderColor);
+            g2d.drawRoundRect(1, 1, getWidth() - 1, getHeight() - 1, curve, curve);
+        }
         g.drawImage(buffer, 0, 0, null);
         super.paintComponent(g);
     }
@@ -164,6 +195,7 @@ public class InputCheckbox extends JComponent {
     public InputCheckbox setSelected(boolean sel) {
         boolean pre = this.selected;
         this.selected = sel;
+        transitionColor(5,5);
         /*if (sel) {
          this.curXPosOfSwitch = this.getWidth() / 2;
          } else {
@@ -194,11 +226,13 @@ public class InputCheckbox extends JComponent {
 
     }
     private double positionToSlideTo = 0;
+    private double accel = 0;
 
     ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
 
-    public void transitionPosition(long time) {
-
+    public void transitionPosition(long time, double step) {
+        positionToSlideTo = 0;
+        accel = 0;
         if (isSelected()) {
             positionToSlideTo = this.getWidth() / 2;
         }
@@ -208,25 +242,71 @@ public class InputCheckbox extends JComponent {
         ses.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
-                if (curXPosOfSwitch > positionToSlideTo && curXPosOfSwitch - positionToSlideTo >= 1) {
-                    System.out.println("A");
-                    curXPosOfSwitch--;
-                    repaint();
-                } else if (curXPosOfSwitch <= positionToSlideTo && curXPosOfSwitch - positionToSlideTo <= 1) {
-                    System.out.println("B");
-                    curXPosOfSwitch++;
-                    repaint();
-                } else {
-                    System.out.println("Done");
+                if (Math.abs(curXPosOfSwitch - positionToSlideTo) < step) {
+                    if (curXPosOfSwitch != positionToSlideTo) {
+                        curXPosOfSwitch = (int) positionToSlideTo;
+                        repaint();
+                    }
                     ses.shutdown();
+                } else {
+                    if (accel < step) {
+                        accel += 0.1;
+                    }
+                    if (curXPosOfSwitch > positionToSlideTo) {
+                        curXPosOfSwitch -= (int) ((double) step * (double) accel);
+                        repaint();
+                    } else if (curXPosOfSwitch < positionToSlideTo) {
+                        curXPosOfSwitch += (int) ((double) step * (double) accel);
+                        paintImmediately(0, 0, getWidth(), getHeight());
+                    } else {
+                        ses.shutdown();
+                        if (curXPosOfSwitch != positionToSlideTo) {
+                            curXPosOfSwitch = (int) positionToSlideTo;
+                            repaint();
+                        }
+                    }
                 }
             }
         }, 0, time, TimeUnit.MILLISECONDS);
     }
+    private volatile Color currentKnobColor = INACTIVE_KNOB;
+    
+    public void transitionColor(long time, double step) {
+        if (ses == null || ses.isShutdown()) {
+            ses = Executors.newSingleThreadScheduledExecutor();
+        }
+        Color curKnobColor = (isEnabled() ? ACTIVE_KNOB : INACTIVE_KNOB);
+        Color finalKnobColor = (isEnabled() ? INACTIVE_KNOB : ACTIVE_KNOB);
+        int rKnob = finalKnobColor.getRed() - curKnobColor.getRed();
+        int gKnob = finalKnobColor.getGreen() - curKnobColor.getGreen();
+        int bKnob = finalKnobColor.getBlue() - curKnobColor.getBlue();
+        if (bKnob != 0 || gKnob != 0 || rKnob != 0) {
+            for (int i = 0; i <= time; i++) {
+                System.out.println(curKnobColor.getRed() + ((rKnob * i) / time));
+                System.out.println(curKnobColor.getGreen() + ((gKnob * i) / time));
+                System.out.println(curKnobColor.getBlue() + ((bKnob * i) / time));
+                Color c = new Color(
+                        (int)(curKnobColor.getRed() + ((rKnob * i) / time)),
+                        (int)(curKnobColor.getGreen() + ((gKnob * i) / time)),
+                        (int)(curKnobColor.getBlue() + ((bKnob * i) / time))
+                );
+                currentKnobColor = c;
+                paintImmediately(0, 0, getWidth(), getHeight());
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException ex) {
+
+                }
+            }
+        }
+    }
 
     public void clickEvent() {
         toggleSelected();
-        transitionPosition(1);
+        if (switchStyle) {
+            transitionPosition(10, 5);
+        }
+        transitionColor(10, 5);
     }
 
     public void exitEvent() {

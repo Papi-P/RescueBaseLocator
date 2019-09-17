@@ -309,10 +309,12 @@ class ButtonPanel extends JPanel {
                 .setAntialiased(true);
 
         overlayToggle.setAntialiased(true)
-                .setCurve(20);
+                .setCurve(20)
+                .setSwitch(true);
 
         useProperToggle.setAntialiased(true)
-                .setCurve(0);
+                .setCurve(40)
+                .setSwitch(true);
         //                           load   x    y  wait  find
         gbl.rowWeights = new double[]{0.7, 0.1, 0.1, 0.1, 0.1, 0.1, 0.7};
         gbc.gridx = 0;
