@@ -314,7 +314,9 @@ class ButtonPanel extends JPanel {
 
         useProperToggle.setAntialiased(true)
                 .setCurve(40)
-                .setSwitch(true);
+                .setSwitch(true)
+                .setSelected(true)
+                .setAllowRapidUse(true);
         //                           load   x    y  wait  find
         gbl.rowWeights = new double[]{0.7, 0.1, 0.1, 0.1, 0.1, 0.1, 0.7};
         gbc.gridx = 0;

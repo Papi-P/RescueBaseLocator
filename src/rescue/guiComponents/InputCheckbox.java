@@ -9,10 +9,10 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JComponent;
 
 /**
@@ -112,7 +112,7 @@ public class InputCheckbox extends JComponent {
     public boolean isBuffered() {
         return this.doubleBuffered;
     }
-    private Color INACTIVE_KNOB = Color.WHITE;
+    private Color INACTIVE_KNOB = Color.decode("#FFFFFF");
     private Color ACTIVE_KNOB = Color.decode("#FFFFFF");
     private Color INACTIVE_SLIDE = Color.decode("#333333");
     private Color ACTIVE_SLIDE = Color.decode("#38A1F3");
@@ -155,20 +155,20 @@ public class InputCheckbox extends JComponent {
             //paint the background of the component
             g2d.setColor((this.selected ? ACTIVE_SLIDE : INACTIVE_SLIDE));
             g2d.fillRoundRect(1, 3, getWidth() - 2, getHeight() - 6, curve, curve);
-            
+
             //paint the border of the component
             g2d.setColor(BORDER_COLOR);
             g2d.setStroke(new BasicStroke(borderWeight));
             g2d.drawRoundRect(1, 3, getWidth() - 2, getHeight() - 6, curve, curve);
-            
+
             //paint the knob of the component
-            g2d.setColor(currentKnobColor);
+            g2d.setColor((this.selected ? ACTIVE_KNOB : INACTIVE_KNOB));
             g2d.fillRoundRect(curXPosOfSwitch + 1, 1, getWidth() / 2 - 1, getHeight() - 2, curve, curve);
-            
+
             //paint the knob's border
             g2d.setColor(BORDER_COLOR);
             g2d.drawRoundRect(curXPosOfSwitch + 1, 1, getWidth() / 2 - 1, getHeight() - 2, curve, curve);
-            
+
         } else {
             //paint the checkbox-style component
             g2d.setColor((this.selected ? ACTIVE_KNOB : INACTIVE_KNOB));
@@ -198,13 +198,13 @@ public class InputCheckbox extends JComponent {
 
     public void toggleSelected() {
         if (isSelected()) {
-            setSelected(false);
+            setSelectedSmooth(false);
         } else {
-            setSelected(true);
+            setSelectedSmooth(true);
         }
     }
 
-    public InputCheckbox setSelected(boolean sel) {
+    public InputCheckbox setSelectedSmooth(boolean sel) {
         boolean pre = this.selected;
         this.selected = sel;
         if (pre != sel) {
@@ -212,7 +212,15 @@ public class InputCheckbox extends JComponent {
         }
         return this;
     }
-
+    
+    public InputCheckbox setSelected(boolean sel){
+        this.selected = sel;
+        this.positionToSlideTo = (isSelected() ? this.getWidth() / 2 - 1 : 0);
+        this.curXPosOfSwitch = (int)positionToSlideTo;
+        paintImmediately(0, 0, this.getWidth(), this.getHeight());
+        return this;
+    }
+    
     public boolean isSelected() {
         return this.selected;
     }
@@ -232,59 +240,62 @@ public class InputCheckbox extends JComponent {
 
     }
     private double positionToSlideTo = 0;
+
     private double accel = 0;
 
-    ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
-
-    public void transitionPosition(long time, double step) {
+    public void transitionPosition(long time, double step, double acceleration) {
         positionToSlideTo = 0;
         accel = 0;
         if (isSelected()) {
             positionToSlideTo = this.getWidth() / 2 - 1;
         }
-        if (ses == null || ses.isShutdown()) {
-            ses = Executors.newSingleThreadScheduledExecutor();
-        }
-        while (true) {
-            if (Math.abs(curXPosOfSwitch - positionToSlideTo) < step) {
-                if (curXPosOfSwitch != positionToSlideTo) {
-                    curXPosOfSwitch = (int) positionToSlideTo;
-                    paintImmediately(0, 0, getWidth(), getHeight());
-                }
-                break;
-            } else {
-                if (accel < step) {
-                    accel += 0.1;
-                }
-                if (curXPosOfSwitch > positionToSlideTo) {
-                    curXPosOfSwitch -= (int) ((double) step * (double) accel);
-                    paintImmediately(0, 0, getWidth(), getHeight());
-                } else if (curXPosOfSwitch < positionToSlideTo) {
-                    curXPosOfSwitch += (int) ((double) step * (double) accel);
-                    paintImmediately(0, 0, getWidth(), getHeight());
-                } else {
+        new Timer().scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (Math.abs(curXPosOfSwitch - positionToSlideTo) < step) {
                     if (curXPosOfSwitch != positionToSlideTo) {
                         curXPosOfSwitch = (int) positionToSlideTo;
                         paintImmediately(0, 0, getWidth(), getHeight());
                     }
-                    break;
+                    this.cancel();
+                } else {
+                    if (accel < step) {
+                        accel += acceleration;
+                    }
+                    if (curXPosOfSwitch > positionToSlideTo) {
+                        curXPosOfSwitch -= (int) ((double) step * (double) accel);
+                        paintImmediately(0, 0, getWidth(), getHeight());
+                    } else if (curXPosOfSwitch < positionToSlideTo) {
+                        curXPosOfSwitch += (int) ((double) step * (double) accel);
+                        paintImmediately(0, 0, getWidth(), getHeight());
+                    } else {
+                        if (curXPosOfSwitch != positionToSlideTo) {
+                            curXPosOfSwitch = (int) positionToSlideTo;
+                            paintImmediately(0, 0, getWidth(), getHeight());
+                        }
+                        this.cancel();
+                    }
                 }
             }
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(InputCheckbox.class.getName()).log(Level.SEVERE, null, ex);
+        }, 0, time);
+    }
+
+    private boolean allowRapid = false;
+    public InputCheckbox setAllowRapidUse(boolean rapid){
+        this.allowRapid = rapid;
+        return this;
+    }
+    public boolean allowsRapid(){
+        return this.allowRapid;
+    }
+    
+    public void clickEvent() {
+        if (curXPosOfSwitch == positionToSlideTo  || allowRapid) {
+            toggleSelected();
+            if (switchStyle) {
+                transitionPosition(10, 5, 0.05);
             }
         }
-    }
-    private volatile Color currentKnobColor = INACTIVE_KNOB;
-
-    public void clickEvent() {
-        toggleSelected();
-        if (switchStyle) {
-            transitionPosition(10, 5);
-        }
-        currentKnobColor = (isSelected() ? this.ACTIVE_KNOB : this.INACTIVE_KNOB);
     }
 
     public void exitEvent() {
